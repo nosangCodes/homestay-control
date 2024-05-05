@@ -1,6 +1,6 @@
 import { client } from "../db/client";
 
-export const getAllUsers = async () => {
+const getAllUsers = async () => {
   try {
     const users = await client.user.findMany();
     return users;
@@ -9,3 +9,5 @@ export const getAllUsers = async () => {
     throw error;
   }
 };
+
+export {getAllUsers}
