@@ -1,7 +1,10 @@
 import { json } from "body-parser";
 import express, { type Express } from "express";
 import cors from "cors";
+import * as dotenv from "dotenv";
 import userRoutes from "./routes/user";
+
+dotenv.config();
 
 export const createServer = (): Express => {
   const app = express();

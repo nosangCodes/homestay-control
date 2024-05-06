@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { validatePassword } from "./custom.validation";
 
 const signupSchema = {
   body: Joi.object().keys({
@@ -9,8 +10,15 @@ const signupSchema = {
       .length(10)
       .pattern(/^[0-9]+$/)
       .required(),
-    password: Joi.string().min(1).max(50).required(),
+    password: Joi.custom(validatePassword, "validate password").required(),
+    userType: Joi.valid("ADMIN", "USER").default("ADMIN"),
   }),
 };
 
-export { signupSchema };
+const signinSchema = {
+  body: Joi.object().keys({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  }),
+};
+export { signupSchema, signinSchema };

@@ -15,7 +15,6 @@ const validate =
       Object.keys(validSchema) as (keyof Request<{}, {}, {}, {}>)[]
     );
 
-    console.log("object", object);
 
     const { value, error } = Joi.object(validSchema)
       .prefs({ errors: { label: "key" }, abortEarly: false })
