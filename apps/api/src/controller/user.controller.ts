@@ -4,7 +4,6 @@ import handleAsync from "../utils/handleAsync";
 import { User } from "@repo/db";
 import { hashPassword, verifyPassword } from "../utils/password-helper";
 import { generateToken } from "../utils/jwt-helper";
-import { client } from "../db/client";
 
 const getAll = handleAsync(async (_: Request, res: Response) => {
   try {

@@ -1,10 +1,10 @@
+import * as dotenv from "dotenv";
+dotenv.config();
 import { json } from "body-parser";
 import express, { type Express } from "express";
 import cors from "cors";
-import * as dotenv from "dotenv";
 import userRoutes from "./routes/user";
-
-dotenv.config();
+import roomRoutes from "./routes/room.routes";
 
 export const createServer = (): Express => {
   const app = express();
@@ -13,6 +13,7 @@ export const createServer = (): Express => {
     .use(json())
     .use(cors())
     .use("/user", userRoutes)
+    .use("/room", roomRoutes)
     .get("/status", (_, res) => {
       res.json({ ok: true });
     });
