@@ -32,7 +32,7 @@ export default async function isRegisteredValidate(
     }
     next();
   } catch (error) {
-    console.log("🚀 ~ isRegisteredValidate error:", error);
+    console.error("🚀 ~ isRegisteredValidate error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }

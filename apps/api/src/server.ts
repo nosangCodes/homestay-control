@@ -5,6 +5,7 @@ import express, { type Express } from "express";
 import cors from "cors";
 import userRoutes from "./routes/user";
 import roomRoutes from "./routes/room.routes";
+import cookieParser from "cookie-parser";
 
 export const createServer = (): Express => {
   const app = express();
@@ -12,6 +13,7 @@ export const createServer = (): Express => {
   app
     .use(json())
     .use(cors())
+    .use(cookieParser())
     .use("/user", userRoutes)
     .use("/room", roomRoutes)
     .get("/status", (_, res) => {
