@@ -20,6 +20,40 @@ model User {
   updatedAt DateTime @default(now())
 }
 
+model Room {
+  id               Int         @id @default(autoincrement())
+  title            String
+  description      String
+  rate             Int
+  underMaintenance Boolean     @default(false)
+  thumbnailName    String
+  images           RoomImage[]
+  facilities       Facility[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model RoomImage {
+  id     Int    @id @default(autoincrement())
+  name   String
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Facility {
+  id     Int    @id @default(autoincrement())
+  name   String
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
 enum UserType {
   ADMIN
   USER
