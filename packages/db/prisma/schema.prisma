@@ -21,14 +21,15 @@ model User {
 }
 
 model Room {
-  id               Int         @id @default(autoincrement())
+  id               Int     @id @default(autoincrement())
   title            String
   description      String
   rate             Int
-  underMaintenance Boolean     @default(false)
+  underMaintenance Boolean @default(false)
   thumbnailName    String
-  images           RoomImage[]
-  facilities       Facility[]
+
+  images     RoomImage[]
+  facilities RoomFacility[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
@@ -45,10 +46,24 @@ model RoomImage {
 }
 
 model Facility {
-  id     Int    @id @default(autoincrement())
-  name   String
-  room   Room   @relation(fields: [roomId], references: [id])
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+
+  rooms RoomFacility[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+// for the many-to-many relationship
+model RoomFacility {
+  id     Int  @id @default(autoincrement())
   roomId Int
+  room   Room @relation(fields: [roomId], references: [id])
+
+  facilityId Int
+  facility   Facility @relation(fields: [facilityId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
