@@ -1,4 +1,8 @@
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import s3Client from "./client";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -26,9 +30,10 @@ export const s3UploadMultiple = async (files: Express.Multer.File[]) => {
   try {
     let fileNames: string[] = [];
     const commands = files.map((file) => {
-      fileNames.push(`${uuidv4()}-${file.originalname}`);
+      const currentFileName = `${uuidv4()}-${file.originalname}`;
+      fileNames.push(currentFileName);
       return new PutObjectCommand({
-        Key: `${uuidv4()}-${file.originalname}`,
+        Key: currentFileName,
         Bucket: bucketName,
         Body: file.buffer,
       });
@@ -69,5 +74,29 @@ export const generateImageLinkMultiple = async (names: string[]) => {
     return results;
   } catch (error) {
     throw error;
+  }
+};
+
+export const s3DeleteObject = async (key: string) => {
+  const command = new DeleteObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    return response;
+  } catch (error) {
+    console.error("[ERROR DELETING S3 BUCKET OBJECT]", error);
+  }
+};
+
+export const s3DeleteObjectMultiple = async (keys: string[]) => {
+  try {
+    console.log("🚀 ~ s3DeleteObjectMultiple ~ keys:", keys);
+    const responses = await Promise.all(keys.map((key) => s3DeleteObject(key)));
+    return responses;
+  } catch (error) {
+    console.error("[ERROR DELETING S3 BUCKET MULTIPLE OBJECT]", error);
   }
 };

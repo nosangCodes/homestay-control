@@ -15,58 +15,54 @@ model User {
   phone     String?  @unique
   password  String
   userType  UserType @default(ADMIN)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 }
 
 model Room {
-  id               Int     @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   title            String
   description      String
   rate             Int
-  underMaintenance Boolean @default(false)
+  underMaintenance Boolean        @default(false)
   thumbnailName    String
-
-  images     RoomImage[]
-  facilities RoomFacility[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now())
+  facilities       RoomFacility[]
+  images           RoomImage[]
 }
 
 model RoomImage {
-  id     Int    @id @default(autoincrement())
-  name   String
-  room   Room   @relation(fields: [roomId], references: [id])
-  roomId Int
-
+  id        Int      @id @default(autoincrement())
+  name      String
+  roomId    Int
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+  room      Room     @relation(fields: [roomId], references: [id])
+
+  @@index([roomId], map: "RoomImage_roomId_fkey")
 }
 
 model Facility {
-  id          Int     @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   name        String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now())
   description String?
-
-  rooms RoomFacility[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  rooms       RoomFacility[]
 }
 
-// for the many-to-many relationship
 model RoomFacility {
-  id     Int  @id @default(autoincrement())
-  roomId Int
-  room   Room @relation(fields: [roomId], references: [id])
-
+  id         Int      @id @default(autoincrement())
+  roomId     Int
   facilityId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
   facility   Facility @relation(fields: [facilityId], references: [id])
+  room       Room     @relation(fields: [roomId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  @@index([facilityId], map: "RoomFacility_facilityId_fkey")
+  @@index([roomId], map: "RoomFacility_roomId_fkey")
 }
 
 enum UserType {

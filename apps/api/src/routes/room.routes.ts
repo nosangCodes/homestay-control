@@ -4,6 +4,7 @@ import { roomValidation } from "../validations";
 import { roomController } from "../controller";
 import { imageUpload } from "../multer/service";
 import isAuthorized from "../middlewares/is-authorized";
+import { roomId } from "../validations/room.validation";
 
 const router = Router();
 
@@ -29,6 +30,21 @@ router
     isAuthorized,
     validate(roomValidation.roomId),
     roomController.getRoomById
+  )
+  .put(
+    "/:id",
+    isAuthorized,
+    imageUpload.fields([
+      {
+        name: "thumbnail",
+        maxCount: 1,
+      },
+      {
+        name: "newImage",
+      },
+    ]),
+    validate(roomId),
+    roomController.update
   )
   .get("/get-all-facilities", isAuthorized, roomController.getFacilities)
   .get("/check-facilities", isAuthorized, roomController.checkfacilities)

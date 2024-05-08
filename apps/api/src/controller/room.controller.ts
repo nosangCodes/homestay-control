@@ -2,8 +2,13 @@ import { Request, Response } from "express";
 import handleAsync from "../utils/handleAsync";
 import { Facility, Room } from "@repo/db";
 import { roomService } from "../service";
-import { s3UploadMultiple, s3UploadSingle } from "../aws/aws-service";
-import { CreateRoomRequest } from "../types";
+import {
+  s3DeleteObject,
+  s3DeleteObjectMultiple,
+  s3UploadMultiple,
+  s3UploadSingle,
+} from "../aws/aws-service";
+import { CreateRoomRequest, UpdateRoomRequest } from "../types";
 
 const create = handleAsync(
   async (req: Request<{}, {}, CreateRoomRequest>, res: Response) => {
@@ -54,6 +59,74 @@ const create = handleAsync(
   }
 );
 
+const update = handleAsync(
+  async (
+    req: Request<{ id: number }, {}, Partial<UpdateRoomRequest>>,
+    res: Response
+  ) => {
+    try {
+      const { id } = req.params;
+      const { removedImages } = req.body;
+
+      const roomData = await roomService.getById(id);
+      if (!roomData) {
+        return res.status(400).json({ message: "room not found" });
+      }
+      const files = req.files as {
+        thumbnail?: Express.Multer.File[];
+        newImage?: Express.Multer.File[];
+      };
+
+      console.log("🚀 ~ files:", files);
+      if (files?.thumbnail?.[0]) {
+        const singleFileResult = await s3UploadSingle(files.thumbnail[0]);
+        if (singleFileResult.status === 200) {
+          // delete old after uploaded
+          if (typeof roomData?.thumbnailName !== "string") {
+            const deletedResponse = await s3DeleteObject(
+              roomData?.thumbnailName?.name
+            );
+          }
+          Object.assign(req.body, { thumbnailName: singleFileResult.fileName });
+        }
+      }
+
+      if (files?.newImage && files?.newImage?.length > 0) {
+        const multipleFileresult = await s3UploadMultiple(files.newImage);
+        console.log("🚀 ~ multipleFileresult:", multipleFileresult)
+        if (multipleFileresult.status === 200) {
+          // add new file names
+          await roomService.addImages({
+            names: multipleFileresult.fileNames,
+            roomId: id,
+          });
+        }
+      }
+      
+      if (removedImages && removedImages?.length > 0) {
+        const imagesToberemoved = await roomService.getImagesByImageIds(
+          removedImages?.map((image) => parseInt(image.id))
+        );
+
+        if (imagesToberemoved?.length > 0) {
+          const ids = imagesToberemoved.map((image) => image.id);
+          const keys = imagesToberemoved.map((image) => image.name);
+          const deleteFromDb = await roomService.deleteByImageIds(ids);
+          console.log("🚀 ~ deleteFromDb:", deleteFromDb);
+          const deleteFromAWSbucket = await s3DeleteObjectMultiple(keys);
+          console.log("🚀 ~ deleteFromAWSbucket:", deleteFromAWSbucket);
+        }
+      }
+      delete req.body.removedImages;
+      console.log("🚀 ~ req.body:", req.body);
+      const result = await roomService.update(id, req.body);
+      res.json({ message: "updated room data", result });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
+
 const get = handleAsync(
   async (
     req: Request<{}, {}, {}, { page?: string; pageSize?: string }>,
@@ -66,7 +139,6 @@ const get = handleAsync(
         parseInt(pageSize ? pageSize : "5")
       );
 
-      
       res.json({ message: "rooms fetched", data: rooms });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
@@ -79,6 +151,9 @@ const getRoomById = handleAsync(
     try {
       const { id } = req.params;
       const room = await roomService.getById(id);
+      if (!room) {
+        return res.status(400).json({ message: "room not found" });
+      }
       res.json({ message: "room fetched", data: room });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
@@ -110,4 +185,4 @@ const checkfacilities = handleAsync(
   }
 );
 
-export { create, getFacilities, checkfacilities, get, getRoomById };
+export { create, getFacilities, checkfacilities, get, getRoomById, update };

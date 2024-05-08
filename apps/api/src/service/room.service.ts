@@ -1,6 +1,6 @@
 import { Room, RoomImage } from "@repo/db";
 import { client } from "../db/client";
-import { CreateRoomRequest } from "../types";
+import { CreateRoomRequest, UpdateRoomRequest } from "../types";
 import { generateImageLinkSingle } from "../aws/aws-service";
 
 const create = async (data: CreateRoomRequest) => {
@@ -10,6 +10,7 @@ const create = async (data: CreateRoomRequest) => {
         connect: { id: facilityId.id }, // Connect each facility by its ID
       },
     }));
+
     const newRoom = await client.room.create({
       data: {
         ...data,
@@ -99,6 +100,10 @@ const getById = async (id: number) => {
       },
     });
 
+    if (!room) {
+      return false;
+    }
+
     const formattedRoom = {
       ...room,
       facilities: room?.facilities.map((facility) => facility.facility.name),
@@ -122,6 +127,43 @@ const getById = async (id: number) => {
     return formattedRoom;
   } catch (error) {
     console.error("[FAILED TO FETCH ROOMS]", error);
+    throw error;
+  }
+};
+
+const update = async (id: number, data: Partial<UpdateRoomRequest>) => {
+  try {
+    const facilityConnections =
+      data?.facilities &&
+      data.facilities.map((facilityId) => ({
+        facility: {
+          connect: { id: parseInt(facilityId.id.toString()) }, // Connect each facility by its ID
+        },
+      }));
+    // deletes all connections, then creates new connections
+    const result = await client.room.update({
+      where: {
+        id,
+      },
+      data: {
+        ...data,
+        facilities: {
+          deleteMany: {},
+          create: facilityConnections,
+        },
+      },
+      include: {
+        facilities: {
+          select: {
+            facility: true,
+          },
+        },
+        images: true,
+      },
+    });
+    return result;
+  } catch (error) {
+    console.error("[ERROR UPDATING ROOM]", error);
     throw error;
   }
 };
@@ -173,4 +215,46 @@ const getFacilities = async () => {
     throw error;
   }
 };
-export { create, addImages, getFacilities, checkfacilities, get, getById };
+
+const getImagesByImageIds = async (ids: number[]) => {
+  try {
+    const images = await client.roomImage.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+    return images;
+  } catch (error) {
+    console.error("[ERROR GETTING ROOM IMAGES]", error);
+    throw error;
+  }
+};
+
+const deleteByImageIds = async (ids: number[]) => {
+  try {
+    const response = await client.roomImage.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+    return response;
+  } catch (error) {
+    console.error("[ERROR DELETING IMAGES]");
+    throw error;
+  }
+};
+export {
+  create,
+  addImages,
+  getFacilities,
+  checkfacilities,
+  get,
+  getById,
+  update,
+  getImagesByImageIds,
+  deleteByImageIds,
+};
