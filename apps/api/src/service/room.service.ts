@@ -4,7 +4,6 @@ import { CreateRoomRequest } from "../types";
 
 const create = async (data: CreateRoomRequest) => {
   try {
-
     const facilityConnections = data.facilities.map((facilityId) => ({
       facility: {
         connect: { id: facilityId.id }, // Connect each facility by its ID
@@ -41,6 +40,48 @@ const addImages = async (data: { roomId: number; names: string[] }) => {
     return roomImages;
   } catch (error) {
     console.error("[ERROR ADDING ROOM IMAGES]", error);
+    throw error;
+  }
+};
+
+const get = async () => {
+  const currentPage = 1;
+  const pageSize = 5;
+  try {
+    const rooms = await client.room.findMany({
+      skip: (currentPage - 1) * pageSize,
+      take: pageSize,
+      include: {
+        facilities: {
+          select: {
+            facility: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        images: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    const formattedRooms = rooms.map((room) => ({
+      ...room,
+      facilities: room.facilities.map((facility) => facility.facility.name),
+      images: room.images.map((image) => image.name),
+    }));
+    return {
+      rooms: formattedRooms,
+      metadata: {
+        currentPage,
+        pageSize,
+      },
+    };
+  } catch (error) {
+    console.error("[FAILED TO FETCH ROOMS]", error);
     throw error;
   }
 };
@@ -92,4 +133,4 @@ const getFacilities = async () => {
     throw error;
   }
 };
-export { create, addImages, getFacilities, checkfacilities };
+export { create, addImages, getFacilities, checkfacilities, get };

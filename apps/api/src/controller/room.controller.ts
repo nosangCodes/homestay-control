@@ -54,6 +54,15 @@ const create = handleAsync(
   }
 );
 
+const get = handleAsync(async (req: Request, res: Response) => {
+  try {
+    const rooms = await roomService.get();
+    res.json({ message: "rooms fetched", data: rooms });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 const getFacilities = handleAsync(async (req: Request, res: Response) => {
   try {
     const facilities = await roomService.getFacilities();
@@ -78,4 +87,4 @@ const checkfacilities = handleAsync(
   }
 );
 
-export { create, getFacilities, checkfacilities };
+export { create, getFacilities, checkfacilities, get };
