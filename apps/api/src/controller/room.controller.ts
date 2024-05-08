@@ -54,14 +54,35 @@ const create = handleAsync(
   }
 );
 
-const get = handleAsync(async (req: Request, res: Response) => {
-  try {
-    const rooms = await roomService.get();
-    res.json({ message: "rooms fetched", data: rooms });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+const get = handleAsync(
+  async (
+    req: Request<{}, {}, {}, { page?: string; pageSize?: string }>,
+    res: Response
+  ) => {
+    try {
+      const { page, pageSize } = req.query;
+      const rooms = await roomService.get(
+        parseInt(page ? page : "1"),
+        parseInt(pageSize ? pageSize : "5")
+      );
+      res.json({ message: "rooms fetched", data: rooms });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
   }
-});
+);
+
+const getRoomById = handleAsync(
+  async (req: Request<{ id: number }, {}, {}>, res: Response) => {
+    try {
+      const { id } = req.params;
+      const room = await roomService.getById(id);
+      res.json({ message: "room fetched", data: room });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
 
 const getFacilities = handleAsync(async (req: Request, res: Response) => {
   try {
@@ -87,4 +108,4 @@ const checkfacilities = handleAsync(
   }
 );
 
-export { create, getFacilities, checkfacilities, get };
+export { create, getFacilities, checkfacilities, get, getRoomById };

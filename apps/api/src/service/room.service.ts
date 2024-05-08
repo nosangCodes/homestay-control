@@ -44,10 +44,10 @@ const addImages = async (data: { roomId: number; names: string[] }) => {
   }
 };
 
-const get = async () => {
-  const currentPage = 1;
-  const pageSize = 5;
+const get = async (currentPage = 1, pageSize = 5) => {
   try {
+    const roomsCount = await client.room.count();
+    const totalPages = Math.ceil(roomsCount / pageSize);
     const rooms = await client.room.findMany({
       skip: (currentPage - 1) * pageSize,
       take: pageSize,
@@ -61,25 +61,46 @@ const get = async () => {
             },
           },
         },
-        images: {
-          select: {
-            name: true,
-          },
-        },
       },
     });
     const formattedRooms = rooms.map((room) => ({
       ...room,
       facilities: room.facilities.map((facility) => facility.facility.name),
-      images: room.images.map((image) => image.name),
     }));
     return {
       rooms: formattedRooms,
       metadata: {
         currentPage,
         pageSize,
+        totalPages,
       },
     };
+  } catch (error) {
+    console.error("[FAILED TO FETCH ROOMS]", error);
+    throw error;
+  }
+};
+
+const getById = async (id: number) => {
+  try {
+    const room = await client.room.findUnique({
+      where: { id },
+      include: {
+        facilities: {
+          select: {
+            facility: true,
+          },
+        },
+        images: true,
+      },
+    });
+
+    const formattedRoom = {
+      ...room,
+      facilities: room?.facilities.map((facility) => facility.facility.name),
+      images: room?.images.map((image) => image.name),
+    };
+    return formattedRoom;
   } catch (error) {
     console.error("[FAILED TO FETCH ROOMS]", error);
     throw error;
@@ -133,4 +154,4 @@ const getFacilities = async () => {
     throw error;
   }
 };
-export { create, addImages, getFacilities, checkfacilities, get };
+export { create, addImages, getFacilities, checkfacilities, get, getById };

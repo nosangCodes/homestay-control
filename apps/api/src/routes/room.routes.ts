@@ -24,6 +24,12 @@ router
     roomController.create
   )
   .get("/", isAuthorized, roomController.get)
+  .get(
+    "/:id",
+    isAuthorized,
+    validate(roomValidation.roomId),
+    roomController.getRoomById
+  )
   .get("/get-all-facilities", isAuthorized, roomController.getFacilities)
   .get("/check-facilities", isAuthorized, roomController.checkfacilities)
   .post("/test-token", isAuthorized, (req, res) => {

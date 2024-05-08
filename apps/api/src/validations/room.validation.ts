@@ -17,4 +17,10 @@ const create = {
   }),
 };
 
-export { create };
+const roomId = {
+  params: Joi.object().keys({
+    id: Joi.number().required(),
+  }),
+};
+
+export { create, roomId };
