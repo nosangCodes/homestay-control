@@ -25,7 +25,7 @@ const isAuthorized = async (
         .then((decoded) => {
           req.decodedToken = decoded as JwtPayload;
           console.log("decoded", decoded);
-          return next();
+          next();
         })
         .catch((err) => {
           console.log("[TOKEN VERIFICATION FAILED]", err);

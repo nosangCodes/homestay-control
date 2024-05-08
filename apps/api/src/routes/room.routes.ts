@@ -23,6 +23,9 @@ router.post(
   roomController.create
 );
 
+router.get("/get-all-facilities", isAuthorized, roomController.getFacilities);
+router.get("/check-facilities", isAuthorized, roomController.checkfacilities);
+
 router.post("/test-token", isAuthorized, (req, res) => {
   res.json({ message: "hello", decodedToken: req.decodedToken });
 });

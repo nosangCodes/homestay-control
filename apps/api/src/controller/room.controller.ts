@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 import handleAsync from "../utils/handleAsync";
-import { Room } from "@repo/db";
+import { Facility, Room } from "@repo/db";
 import { roomService } from "../service";
 import { s3UploadMultiple, s3UploadSingle } from "../aws/aws-service";
+import { CreateRoomRequest } from "../types";
 
 const create = handleAsync(
-  async (req: Request<{}, {}, Room>, res: Response) => {
+  async (req: Request<{}, {}, CreateRoomRequest>, res: Response) => {
     try {
       const files = req.files as {
         thumbnail: Express.Multer.File[];
@@ -19,7 +20,9 @@ const create = handleAsync(
       const singleFileResult = await s3UploadSingle(files.thumbnail[0]);
       Object.assign(req.body, { thumbnailName: singleFileResult.fileName });
 
-      const newRoom = await roomService.create(req.body);
+      const newRoom = await roomService.create({
+        ...req.body,
+      });
 
       let multipleFileresult: {
         status: number | undefined;
@@ -51,4 +54,28 @@ const create = handleAsync(
   }
 );
 
-export { create };
+const getFacilities = handleAsync(async (req: Request, res: Response) => {
+  try {
+    const facilities = await roomService.getFacilities();
+    res.json({ message: "facilities fetched", data: facilities });
+  } catch (error) {
+    console.log("[ERROR FETCHING FACILITIES]", error);
+    res.status(500).json({ messahe: "Internal server error" });
+  }
+});
+
+const checkfacilities = handleAsync(
+  async (req: Request<{}, {}, { facilities: number[] }>, res: Response) => {
+    try {
+      const facilities = await roomService.checkfacilities({
+        facilities: req.body.facilities,
+      });
+      res.json(facilities);
+    } catch (error) {
+      console.log("[ERROR CHECKING  FACILITIES]", error);
+      res.status(500).json({ messahe: "Internal server error" });
+    }
+  }
+);
+
+export { create, getFacilities, checkfacilities };
