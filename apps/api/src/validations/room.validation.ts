@@ -1,4 +1,4 @@
-import Joi from "joi";
+import Joi, { number } from "joi";
 
 const create = {
   body: Joi.object().keys({
@@ -6,6 +6,14 @@ const create = {
     description: Joi.string().min(50).max(250).required(),
     rate: Joi.number().min(100).required(),
     underMaintenance: Joi.boolean().default(false),
+    facilities: Joi.array()
+      .items(
+        Joi.object().keys({
+          id: Joi.number().required(),
+        })
+      )
+      .min(1)
+      .required(),
   }),
 };
 
