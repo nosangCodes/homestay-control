@@ -65,6 +65,8 @@ const get = handleAsync(
         parseInt(page ? page : "1"),
         parseInt(pageSize ? pageSize : "5")
       );
+
+      
       res.json({ message: "rooms fetched", data: rooms });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });

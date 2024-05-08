@@ -1,6 +1,7 @@
 import { Room, RoomImage } from "@repo/db";
 import { client } from "../db/client";
 import { CreateRoomRequest } from "../types";
+import { generateImageLinkSingle } from "../aws/aws-service";
 
 const create = async (data: CreateRoomRequest) => {
   try {
@@ -63,10 +64,13 @@ const get = async (currentPage = 1, pageSize = 5) => {
         },
       },
     });
-    const formattedRooms = rooms.map((room) => ({
-      ...room,
-      facilities: room.facilities.map((facility) => facility.facility.name),
-    }));
+    const formattedRooms = await Promise.all(
+      rooms.map(async (room) => ({
+        ...room,
+        facilities: room.facilities.map((facility) => facility.facility.name),
+        thumbnailName: await generateImageLinkSingle(room.thumbnailName),
+      }))
+    );
     return {
       rooms: formattedRooms,
       metadata: {
@@ -98,7 +102,22 @@ const getById = async (id: number) => {
     const formattedRoom = {
       ...room,
       facilities: room?.facilities.map((facility) => facility.facility.name),
-      images: room?.images.map((image) => image.name),
+      thumbnailName: room?.thumbnailName
+        ? await generateImageLinkSingle(room?.thumbnailName).catch((err) => {
+            console.error("Error generating thumbnail link:", err);
+            return "";
+          })
+        : "",
+      images: room?.images
+        ? await Promise.all(
+            room.images.map(async (image) => {
+              return await generateImageLinkSingle(image.name).catch((err) => {
+                console.error("Error generating image link:", err);
+                return "";
+              });
+            })
+          )
+        : [],
     };
     return formattedRoom;
   } catch (error) {

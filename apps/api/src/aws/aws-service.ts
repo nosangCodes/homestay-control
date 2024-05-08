@@ -1,6 +1,7 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import s3Client from "./client";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const bucketName = process.env.AWS_BUCKET_NAME as string;
 
@@ -36,6 +37,36 @@ export const s3UploadMultiple = async (files: Express.Multer.File[]) => {
       commands.map((command) => s3Client.send(command))
     );
     return { status: results[0].$metadata.httpStatusCode, fileNames };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const generateImageLinkSingle = async (name: string) => {
+  try {
+    if (!name) {
+      return "";
+    }
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: name,
+    });
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 43200 });
+    return {
+      name,
+      url,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const generateImageLinkMultiple = async (names: string[]) => {
+  try {
+    const results = await Promise.all(
+      names.map((name) => generateImageLinkSingle(name))
+    );
+    return results;
   } catch (error) {
     throw error;
   }
