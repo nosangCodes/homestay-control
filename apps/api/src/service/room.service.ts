@@ -86,6 +86,20 @@ const get = async (currentPage = 1, pageSize = 5) => {
   }
 };
 
+const generateImageLinks = async (names: string[]) => {
+  const response = await Promise.all(
+    names.map(async (name) => {
+      const imageLink = await generateImageLinkSingle(name).catch((err) => {
+        console.error("Error generating image link:", err);
+        return "";
+      });
+      return typeof imageLink !== "string" ? imageLink : undefined;
+    })
+  );
+
+  return response.filter((resp) => resp !== undefined);
+};
+
 const getById = async (id: number) => {
   try {
     const room = await client.room.findUnique({
@@ -113,16 +127,7 @@ const getById = async (id: number) => {
             return "";
           })
         : "",
-      images: room?.images
-        ? await Promise.all(
-            room.images.map(async (image) => {
-              return await generateImageLinkSingle(image.name).catch((err) => {
-                console.error("Error generating image link:", err);
-                return "";
-              });
-            })
-          )
-        : [],
+      images: await generateImageLinks(room.images.map((image) => image.name)),
     };
     return formattedRoom;
   } catch (error) {
@@ -247,6 +252,33 @@ const deleteByImageIds = async (ids: number[]) => {
     throw error;
   }
 };
+
+const deleteById = async (id: number) => {
+  try {
+    // delete room images
+    await client.roomImage.deleteMany({
+      where: {
+        roomId: id,
+      },
+    });
+
+    // delete  room facility
+    await client.roomFacility.deleteMany({
+      where: {
+        roomId: id,
+      },
+    });
+    const response = await client.room.delete({
+      where: {
+        id,
+      },
+    });
+    return response;
+  } catch (error) {
+    console.error("[ERROR DELETING ROOM]", error);
+    throw error;
+  }
+};
 export {
   create,
   addImages,
@@ -257,4 +289,5 @@ export {
   update,
   getImagesByImageIds,
   deleteByImageIds,
+  deleteById,
 };

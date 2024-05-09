@@ -91,10 +91,15 @@ export const s3DeleteObject = async (key: string) => {
   }
 };
 
-export const s3DeleteObjectMultiple = async (keys: string[]) => {
+export const s3DeleteObjectMultiple = async (keys: (string | undefined)[]) => {
   try {
-    console.log("🚀 ~ s3DeleteObjectMultiple ~ keys:", keys);
-    const responses = await Promise.all(keys.map((key) => s3DeleteObject(key)));
+    const responses = await Promise.all(
+      keys.map((key) => {
+        if (key) {
+          s3DeleteObject(key);
+        }
+      })
+    );
     return responses;
   } catch (error) {
     console.error("[ERROR DELETING S3 BUCKET MULTIPLE OBJECT]", error);

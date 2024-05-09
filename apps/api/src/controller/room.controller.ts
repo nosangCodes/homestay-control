@@ -93,7 +93,7 @@ const update = handleAsync(
 
       if (files?.newImage && files?.newImage?.length > 0) {
         const multipleFileresult = await s3UploadMultiple(files.newImage);
-        console.log("🚀 ~ multipleFileresult:", multipleFileresult)
+        console.log("🚀 ~ multipleFileresult:", multipleFileresult);
         if (multipleFileresult.status === 200) {
           // add new file names
           await roomService.addImages({
@@ -102,7 +102,7 @@ const update = handleAsync(
           });
         }
       }
-      
+
       if (removedImages && removedImages?.length > 0) {
         const imagesToberemoved = await roomService.getImagesByImageIds(
           removedImages?.map((image) => parseInt(image.id))
@@ -185,4 +185,38 @@ const checkfacilities = handleAsync(
   }
 );
 
-export { create, getFacilities, checkfacilities, get, getRoomById, update };
+const deleteById = handleAsync(
+  async (req: Request<{ id: string }>, res: Response) => {
+    try {
+      const { id } = req.params;
+      const room = await roomService.getById(parseInt(id));
+      console.log("🚀 ~ room:", room);
+      if (!room) {
+        return res.status(400).json({ message: "Room not found" });
+      }
+      const deleteResponse = await roomService.deleteById(parseInt(id));
+      // delete images from aws bucket;
+
+      if (room.images && room.images?.length > 0) {
+        await s3DeleteObjectMultiple(
+          room.images.map((image) => image?.name).filter((value) => value)
+        );
+      }
+      await s3DeleteObject(deleteResponse.thumbnailName);
+      res.json({ message: "room deleted successfully" });
+    } catch (error) {
+      console.log("[ERROR DELETING ROOM]", error);
+      res.status(500).json({ messahe: "Internal server error" });
+    }
+  }
+);
+
+export {
+  create,
+  getFacilities,
+  checkfacilities,
+  get,
+  getRoomById,
+  update,
+  deleteById,
+};
