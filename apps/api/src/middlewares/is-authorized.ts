@@ -17,14 +17,11 @@ const isAuthorized = async (
   next: NextFunction
 ) => {
   try {
-    console.log("cookies", req.cookies?.homestay_token);
     const token = req.cookies?.homestay_token;
-    console.log("🚀 ~ verifyToken ~ token:", token);
     if (token) {
       await verifyjwtToken(token as string)
         .then((decoded) => {
           req.decodedToken = decoded as JwtPayload;
-          console.log("decoded", decoded);
           next();
         })
         .catch((err) => {

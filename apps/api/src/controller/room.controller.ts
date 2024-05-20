@@ -13,6 +13,7 @@ import { CreateRoomRequest, UpdateRoomRequest } from "../types";
 const create = handleAsync(
   async (req: Request<{}, {}, CreateRoomRequest>, res: Response) => {
     try {
+      console.log("🚀 ~ req.body:", req.body);
       const files = req.files as {
         thumbnail: Express.Multer.File[];
         image?: Express.Multer.File[];
@@ -23,7 +24,7 @@ const create = handleAsync(
       }
 
       const singleFileResult = await s3UploadSingle(files.thumbnail[0]);
-      Object.assign(req.body, { thumbnailName: singleFileResult.fileName });
+      Object.assign(req.body, { thumbnail: singleFileResult.fileName });
 
       const newRoom = await roomService.create({
         ...req.body,
@@ -48,7 +49,7 @@ const create = handleAsync(
         data: {
           id: newRoom.id,
           title: newRoom.title,
-          thumnail: newRoom.thumbnailName,
+          thumnail: newRoom.thumbnail,
           files: multipleFileresult?.fileNames,
         },
       });
@@ -66,7 +67,9 @@ const update = handleAsync(
   ) => {
     try {
       const { id } = req.params;
-      const { removedImages } = req.body;
+      const { removedImages, rate } = req.body;
+
+      Object.assign(req.body, { rate: Number(rate) });
 
       const roomData = await roomService.getById(id);
       if (!roomData) {
@@ -74,7 +77,7 @@ const update = handleAsync(
       }
       const files = req.files as {
         thumbnail?: Express.Multer.File[];
-        newImage?: Express.Multer.File[];
+        image?: Express.Multer.File[];
       };
 
       console.log("🚀 ~ files:", files);
@@ -82,17 +85,15 @@ const update = handleAsync(
         const singleFileResult = await s3UploadSingle(files.thumbnail[0]);
         if (singleFileResult.status === 200) {
           // delete old after uploaded
-          if (typeof roomData?.thumbnailName !== "string") {
-            const deletedResponse = await s3DeleteObject(
-              roomData?.thumbnailName?.name
-            );
+          if (typeof roomData?.thumbnail !== "string") {
+            await s3DeleteObject(roomData?.thumbnail?.name);
           }
-          Object.assign(req.body, { thumbnailName: singleFileResult.fileName });
+          Object.assign(req.body, { thumbnail: singleFileResult.fileName });
         }
       }
 
-      if (files?.newImage && files?.newImage?.length > 0) {
-        const multipleFileresult = await s3UploadMultiple(files.newImage);
+      if (files?.image && files?.image?.length > 0) {
+        const multipleFileresult = await s3UploadMultiple(files.image);
         console.log("🚀 ~ multipleFileresult:", multipleFileresult);
         if (multipleFileresult.status === 200) {
           // add new file names
@@ -202,7 +203,7 @@ const deleteById = handleAsync(
           room.images.map((image) => image?.name).filter((value) => value)
         );
       }
-      await s3DeleteObject(deleteResponse.thumbnailName);
+      await s3DeleteObject(deleteResponse.thumbnail);
       res.json({ message: "room deleted successfully" });
     } catch (error) {
       console.log("[ERROR DELETING ROOM]", error);

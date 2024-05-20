@@ -16,18 +16,18 @@ model User {
   password  String
   userType  UserType @default(ADMIN)
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Room {
   id               Int            @id @default(autoincrement())
   title            String
-  description      String
+  description      String         @db.Text
   rate             Int
   underMaintenance Boolean        @default(false)
-  thumbnailName    String
+  thumbnail        String
   createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
   facilities       RoomFacility[]
   images           RoomImage[]
 }
@@ -37,7 +37,7 @@ model RoomImage {
   name      String
   roomId    Int
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   room      Room     @relation(fields: [roomId], references: [id])
 
   @@index([roomId], map: "RoomImage_roomId_fkey")
@@ -47,7 +47,7 @@ model Facility {
   id          Int            @id @default(autoincrement())
   name        String
   createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   description String?
   rooms       RoomFacility[]
 }
@@ -57,7 +57,7 @@ model RoomFacility {
   roomId     Int
   facilityId Int
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   facility   Facility @relation(fields: [facilityId], references: [id])
   room       Room     @relation(fields: [roomId], references: [id])
 
