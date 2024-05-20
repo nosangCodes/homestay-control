@@ -4,7 +4,6 @@ import { roomValidation } from "../validations";
 import { roomController } from "../controller";
 import { imageUpload } from "../multer/service";
 import isAuthorized from "../middlewares/is-authorized";
-import { roomId } from "../validations/room.validation";
 
 const router = Router();
 
@@ -25,6 +24,8 @@ router
     roomController.create
   )
   .get("/", isAuthorized, roomController.get)
+  .get("/get-all-facilities", isAuthorized, roomController.getFacilities)
+  .get("/check-facilities", isAuthorized, roomController.checkfacilities)
   .get(
     "/:id",
     isAuthorized,
@@ -40,15 +41,14 @@ router
         maxCount: 1,
       },
       {
-        name: "newImage",
+        name: "image",
       },
     ]),
-    validate(roomId),
+    validate(roomValidation.roomId),
+    validate(roomValidation.update),
     roomController.update
   )
   .delete("/:id", roomController.deleteById)
-  .get("/get-all-facilities", isAuthorized, roomController.getFacilities)
-  .get("/check-facilities", isAuthorized, roomController.checkfacilities)
   .post("/test-token", isAuthorized, (req, res) => {
     res.json({ message: "hello", decodedToken: req.decodedToken });
   });

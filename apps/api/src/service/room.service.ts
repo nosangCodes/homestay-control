@@ -69,7 +69,7 @@ const get = async (currentPage = 1, pageSize = 5) => {
       rooms.map(async (room) => ({
         ...room,
         facilities: room.facilities.map((facility) => facility.facility.name),
-        thumbnailName: await generateImageLinkSingle(room.thumbnailName),
+        thumbnail: await generateImageLinkSingle(room.thumbnail),
       }))
     );
     return {
@@ -117,17 +117,32 @@ const getById = async (id: number) => {
     if (!room) {
       return false;
     }
+    const images = await generateImageLinks(
+      room.images.map((image) => image.name)
+    );
 
+    const nameToLink: Record<string, string> = {};
+
+    for (const image of images) {
+      if (!image) return;
+      nameToLink[image.name] = image.url;
+    }
+    console.log("🚀 ~ getById ~ nameToLink:", nameToLink);
     const formattedRoom = {
       ...room,
       facilities: room?.facilities.map((facility) => facility.facility.name),
-      thumbnailName: room?.thumbnailName
-        ? await generateImageLinkSingle(room?.thumbnailName).catch((err) => {
+      facilityIds: room?.facilities.map((facility) => facility.facility.id),
+      thumbnail: room?.thumbnail
+        ? await generateImageLinkSingle(room?.thumbnail).catch((err) => {
             console.error("Error generating thumbnail link:", err);
             return "";
           })
         : "",
-      images: await generateImageLinks(room.images.map((image) => image.name)),
+      images: room.images.map((image) => ({
+        id: image.id,
+        name: image.name,
+        url: nameToLink[image.name],
+      })),
     };
     return formattedRoom;
   } catch (error) {

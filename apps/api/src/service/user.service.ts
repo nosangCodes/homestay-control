@@ -21,6 +21,16 @@ const findByEmail = async (email: string) => {
   }
 };
 
+const findById = async (id: number) => {
+  try {
+    const found = await client.user.findUnique({ where: { id } });
+    return found;
+  } catch (error) {
+    console.error("error fetching users", error);
+    throw error;
+  }
+};
+
 const create = async (user: User) => {
   try {
     const newUser = await client.user.create({
@@ -36,4 +46,4 @@ const create = async (user: User) => {
   }
 };
 
-export { getAllUsers, create, findByEmail };
+export { getAllUsers, create, findByEmail, findById };

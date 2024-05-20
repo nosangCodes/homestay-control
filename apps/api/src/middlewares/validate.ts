@@ -9,8 +9,8 @@ const validate =
     query?: ObjectSchema<any>;
   }) =>
   (req: Request, res: Response, next: NextFunction) => {
-    const validSchema = pick(schema, ["body", "params", "query"]);
 
+    const validSchema = pick(schema, ["body", "params", "query"]);
     const object = pick(
       req,
       Object.keys(validSchema) as (keyof Request<{}, {}, {}, {}>)[]

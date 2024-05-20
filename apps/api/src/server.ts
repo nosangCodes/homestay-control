@@ -11,8 +11,13 @@ export const createServer = (): Express => {
   const app = express();
 
   app
-    .use(json())
-    .use(cors())
+    .use(
+      cors({
+        origin: "http://localhost:5173",
+        credentials: true,
+      })
+    )
+    .use(json({ limit: "50mb" }))
     .use(cookieParser())
     .use("/user", userRoutes)
     .use("/room", roomRoutes)

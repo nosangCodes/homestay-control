@@ -38,6 +38,7 @@ const login = handleAsync(
   ) => {
     try {
       const { email, password } = req.body;
+      console.log("🚀 ~ req.body:", req.body);
       const user = await userService.findByEmail(email);
       if (!user) {
         return res.status(400).json({ error: "user with email not found" });
@@ -47,11 +48,26 @@ const login = handleAsync(
         return res.status(400).json({ error: "password does not match" });
       }
       const token = generateToken(email, user.id);
-      res.json({ message: "user loggedin", token });
+      res
+        .cookie("homestay_token", token, { maxAge: 14400000 })
+        .json({ message: "user loggedin", token });
     } catch (error) {
       console.log("error signing in", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
 );
-export { getAll, create, login };
+
+const me = handleAsync(async (req: Request, res: Response) => {
+  try {
+    const user = await userService.findById(req.decodedToken?.userId);
+    if (!user) {
+      res.status(400).json({ message: "user not found" });
+    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+export { getAll, create, login, me };

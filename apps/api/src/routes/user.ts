@@ -3,10 +3,12 @@ import { userController } from "../controller";
 import { userValidation } from "../validations";
 import validate from "../middlewares/validate";
 import isRegisteredValidate from "../middlewares/is-registered";
+import isAuthorized from "../middlewares/is-authorized";
 
 const router = Router();
 
-router.get("/", userController.getAll);
+router.get("/", isAuthorized, userController.getAll);
+router.get("/me", isAuthorized, userController.me);
 router.post(
   "/signup",
   validate(userValidation.signupSchema),
